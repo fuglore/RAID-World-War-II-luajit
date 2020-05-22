@@ -78,20 +78,38 @@ function ElementSpawnEnemyDummy:produce(params)
 	end
 
 	if params and params.name then
-		local unit = safe_spawn_unit(params.name, self:get_orientation())
+                if params.name == "german_flamer" then
+		    --local unit = safe_spawn_unit(params.name, self:get_orientation())
+                    local pos, rot = self:get_orientation()
+		    local unit = World:spawn_unit(Idstring("units/vanilla/characters/enemies/models/german_flamer/german_flamer"), pos, rot)
+		    unit:base():add_destroy_listener(self._unit_destroy_clbk_key, callback(self, self, "clbk_unit_destroyed"))
 
-		unit:base():add_destroy_listener(self._unit_destroy_clbk_key, callback(self, self, "clbk_unit_destroyed"))
+		    unit:unit_data().mission_element = self
+		    local spawn_ai = self:_create_spawn_AI_parametric(params.stance, params.objective, self._values)
 
-		unit:unit_data().mission_element = self
-		local spawn_ai = self:_create_spawn_AI_parametric(params.stance, params.objective, self._values)
+		    unit:brain():set_spawn_ai(spawn_ai)
+		    table.insert(self._units, unit)
+		    self:event("spawn", unit)
 
-		unit:brain():set_spawn_ai(spawn_ai)
-		table.insert(self._units, unit)
-		self:event("spawn", unit)
-
-		if self._values.force_pickup and self._values.force_pickup ~= "none" then
+		    if self._values.force_pickup and self._values.force_pickup ~= "none" then
 			unit:character_damage():set_pickup(self._values.force_pickup)
-		end
+		    end
+                else
+		    local unit = safe_spawn_unit(params.name, self:get_orientation())
+
+		    unit:base():add_destroy_listener(self._unit_destroy_clbk_key, callback(self, self, "clbk_unit_destroyed"))
+
+		    unit:unit_data().mission_element = self
+		    local spawn_ai = self:_create_spawn_AI_parametric(params.stance, params.objective, self._values)
+
+		    unit:brain():set_spawn_ai(spawn_ai)
+		    table.insert(self._units, unit)
+		    self:event("spawn", unit)
+
+		    if self._values.force_pickup and self._values.force_pickup ~= "none" then
+			unit:character_damage():set_pickup(self._values.force_pickup)
+		    end
+                end           
 	else
 		local enemy_name = self:_get_enemy()
 		local unit = safe_spawn_unit(enemy_name, self:get_orientation())
